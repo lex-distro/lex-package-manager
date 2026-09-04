@@ -1,0 +1,4 @@
+# lex base group: minimal LFS set example.
+# File order = install order. Lines starting with '#' are comments.
+# "@other" includes another group. Install with: lex install @base
+fastfetch

@@ -1,0 +1,7 @@
+/lex
+/bin/
+cache/dl/
+cache/build/
+cache/repo/
+logs/*.log
+db/*.lexdata
