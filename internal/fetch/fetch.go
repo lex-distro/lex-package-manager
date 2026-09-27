@@ -71,20 +71,52 @@ func Fetch(lexRoot, url, sha string) (string, error) {
 	}
 	return path, nil
 }
-
-// system tar, dest replaced first
-func Extract(tarball, dest string) error {
+// system tar, unzip, unrar; dest replaced first
+func Extract(archive, dest string) error {
 	if err := os.RemoveAll(dest); err != nil {
 		return err
 	}
 	if err := os.MkdirAll(dest, 0o755); err != nil {
 		return err
 	}
-	if out, err := exec.Command("tar", "-xf", tarball, "-C", dest).CombinedOutput(); err != nil {
-		return fmt.Errorf("tar extract: %v: %s", err, strings.TrimSpace(string(out)))
+
+	ext := strings.ToLower(filepath.Ext(archive))
+	name := strings.ToLower(filepath.Base(archive))
+
+	var cmd *exec.Cmd
+
+	switch {
+	case ext == ".zip":
+		cmd = exec.Command("unzip", "-q", archive, "-d", dest)
+
+	case ext == ".rar":
+		cmd = exec.Command("unrar", "x", "-o+", archive, dest)
+
+	case ext == ".tar",
+		strings.HasSuffix(name, ".tar.gz"),
+		strings.HasSuffix(name, ".tgz"),
+		strings.HasSuffix(name, ".tar.bz2"),
+		strings.HasSuffix(name, ".tbz2"),
+		strings.HasSuffix(name, ".tar.xz"),
+		strings.HasSuffix(name, ".txz"):
+		cmd = exec.Command("tar", "-xf", archive, "-C", dest)
+
+	default:
+		return fmt.Errorf("unsupported archive format: %s", archive)
 	}
+
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf(
+			"extract %s: %v: %s",
+			archive,
+			err,
+			strings.TrimSpace(string(out)),
+		)
+	}
+
 	return nil
 }
+
 
 func parseSHA(s string) ([]byte, error) {
 	s = strings.ToLower(strings.TrimSpace(s))
